@@ -1,0 +1,1 @@
+int kprobe_generic_loader(char * kernel_func);

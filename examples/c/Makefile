@@ -9,6 +9,15 @@ BPFTOOL ?= $(BPFTOOL_OUTPUT)/bootstrap/bpftool
 LIBBLAZESYM_SRC := $(abspath ../../blazesym/)
 LIBBLAZESYM_INC := $(abspath $(LIBBLAZESYM_SRC)/capi/include)
 LIBBLAZESYM_OBJ := $(abspath $(OUTPUT)/libblazesym_c.a)
+KPROBE_LOADER := $(OUTPUT)/kprobe_loader.o
+
+
+CJSON_INC := /usr/include
+CJSON_LIB := /usr/lib/x86_64-linux-gnu
+
+ZLOG_INC := /usr/local/include
+ZLOG_LIB := /usr/local/lib
+
 ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 			 | sed 's/arm.*/arm/' \
 			 | sed 's/aarch64/arm64/' \
@@ -20,12 +29,14 @@ VMLINUX := ../../vmlinux.h/include/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-INCLUDES := -I$(OUTPUT) -I../../libbpf/include/uapi -I$(dir $(VMLINUX)) -I$(LIBBLAZESYM_INC)
+INCLUDES := -I$(OUTPUT) -I../../libbpf/include/uapi -I$(dir $(VMLINUX)) -I$(LIBBLAZESYM_INC) -I$(CJSON_INC) -I$(ZLOG_INC)
 CFLAGS := -g -Wall
-ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
+ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS) -L$(CJSON_LIB) -L$(ZLOG_LIB) -lcjson -lzlog 
 
 APPS = minimal minimal_legacy minimal_ns bootstrap uprobe kprobe fentry \
        usdt sockfilter tc ksyscall task_iter lsm
+
+KPROBE_GATEWAY = kprobe_gateway
 
 CARGO ?= $(shell which cargo)
 ifeq ($(strip $(CARGO)),)
@@ -70,7 +81,7 @@ $(call allow-override,CC,$(CROSS_COMPILE)cc)
 $(call allow-override,LD,$(CROSS_COMPILE)ld)
 
 .PHONY: all
-all: $(APPS)
+all: $(APPS) $(KPROBE_GATEWAY).bpf.o
 
 .PHONY: clean
 clean:
@@ -110,13 +121,21 @@ $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT) 
 		     -c $(filter %.c,$^) -o $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
 	$(Q)$(BPFTOOL) gen object $@ $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
 
+# Build kprobe_gateway.o
+$(KPROBE_GATEWAY).bpf.o: $(KPROBE_GATEWAY).bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT) $(BPFTOOL)
+	$(call msg,BPF,$@)
+	$(Q)$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH)		      \
+		     $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES)		      \
+		     -c $(filter %.c,$^) -o $@
+	
+
 # Generate BPF skeletons
 $(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT) $(BPFTOOL)
 	$(call msg,GEN-SKEL,$@)
 	$(Q)$(BPFTOOL) gen skeleton $< > $@
 
 # Build user-space code
-$(patsubst %,$(OUTPUT)/%.o,$(APPS)): %.o: %.skel.h
+$(patsubst %,$(OUTPUT)/%.o,$(APPS)): %.o: %.skel.h $(KPROBE_GATEWAY).bpf.o
 
 $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 	$(call msg,CC,$@)
@@ -127,7 +146,7 @@ $(patsubst %,$(OUTPUT)/%.o,$(BZS_APPS)): $(LIBBLAZESYM_OBJ)
 $(BZS_APPS): $(LIBBLAZESYM_OBJ)
 
 # Build application binary
-$(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
+$(APPS): %: $(OUTPUT)/%.o  $(KPROBE_LOADER)  $(LIBBPF_OBJ) | $(OUTPUT) $(KPROBE_GATEWAY).bpf.o
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ $(ALL_LDFLAGS) -lelf -lz -o $@
 

@@ -4,8 +4,11 @@
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
+// #include <linux/pkt_cls.h> 
+
 
 #define TC_ACT_OK 0
+#define TC_ACT_SHOT 2
 #define ETH_P_IP  0x0800 /* Internet Protocol packet	*/
 
 SEC("tc")
@@ -28,6 +31,18 @@ int tc_ingress(struct __sk_buff *ctx)
 		return TC_ACT_OK;
 
 	bpf_printk("Got IP packet: tot_len: %d, ttl: %d", bpf_ntohs(l3->tot_len), l3->ttl);
+
+
+	__u32 src_ip = __bpf_ntohl(l3->saddr);
+    __u8 a = (src_ip >> 24) & 0xFF;
+    __u8 b = (src_ip >> 16) & 0xFF;
+    __u8 c = (src_ip >> 8) & 0xFF;
+    __u8 d = src_ip & 0xFF;
+    bpf_printk("Source IP: %d.%d.%d.%d", a, b, c, d);
+	if(a == 127 && b == 0 && c == 0 && d == 1){
+		return TC_ACT_SHOT;
+	}
+
 	return TC_ACT_OK;
 }
 

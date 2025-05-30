@@ -1,0 +1,16 @@
+{
+    "rule_id": "123",
+    "strategy_name": "文件访问策略",
+    "file_name": [
+        {
+            "disallowed_operations": [
+                "delete", "read", "write"
+            ],
+            "file_path": "1.txt"
+        }
+    ],
+    "allowed_processes": "7880",
+    "programs": "1",
+    "application_scenarios": "资源访问异常",
+    "activeName": "blacklist"
+}

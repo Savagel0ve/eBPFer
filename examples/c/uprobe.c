@@ -92,7 +92,8 @@ int main(int argc, char **argv)
 	for (i = 0;; i++) {
 		/* trigger our BPF programs */
 		fprintf(stderr, ".");
-		uprobed_add(i, i + 1);
+		int add_res = uprobed_add(i, i + 1);
+		printf("%d\n",add_res);
 		uprobed_sub(i * i, i);
 		sleep(1);
 	}

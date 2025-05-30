@@ -1,0 +1,1 @@
+iptables -A FORWARD -s 10.0.0.1 -d 10.0.0.2 -p tcp --dport 443 -j ACCEPT
