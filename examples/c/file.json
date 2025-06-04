@@ -1,5 +1,5 @@
 {
-    "rule_id": "123",
+    "rule_id": "file-123",
     "strategy_name": "文件访问策略",
     "file_name": [
         {

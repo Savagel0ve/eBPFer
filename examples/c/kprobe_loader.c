@@ -1,3 +1,4 @@
+//网关函数加载器
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +7,7 @@
 #include <bpf/bpf.h>
 #include <errno.h>
 
-
+//加载统一网关函数
 int kprobe_generic_loader(char * kernel_func){
   
     struct bpf_object *obj;

@@ -91,7 +91,7 @@ int parseJson(char *filename, file_operations_t *file_ops){
                 zlog_info(zlog_cat, "File path: %s", file_path->valuestring);
                 strncpy(file_ops->file_path, file_path->valuestring, MAX_FILE_PATH - 1);
 
-        
+                
                 cJSON *disallowed_operations = cJSON_GetObjectItem(file_entry, "disallowed_operations");
                  if (disallowed_operations && cJSON_IsArray(disallowed_operations)) {
                     int size = cJSON_GetArraySize(disallowed_operations);

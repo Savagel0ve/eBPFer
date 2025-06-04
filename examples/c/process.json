@@ -1,14 +1,14 @@
 
 {
-    "rule-id": ,
+    "rule-id": "process-123",
     "strategy_name": "进程访问策略",
     "pid": "9742",
     "programs": "1",
-    "process_operations": [
+    "process_operations": 
         {
-            "allowed_operations": "kill"
+            "allowed_operations": ["kill", "fork"],
         }
-    ],
+    ,
     "active_name": "whitelist",
     "application_scenarios": "进程权限异常"
 }
