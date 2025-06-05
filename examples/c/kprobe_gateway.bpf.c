@@ -5,6 +5,7 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
+#include "kprobe_gateway.h"
 
 char __license[] SEC("license") = "GPL";
 
@@ -46,6 +47,13 @@ struct {
 	},
 };
 
+
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 1);
+	__type(key, __u32);
+	__type(value, struct policy);
+} filter_map SEC(".maps");
 
 
 
