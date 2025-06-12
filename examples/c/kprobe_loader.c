@@ -8,7 +8,7 @@
 #include <errno.h>
 
 //加载统一网关函数
-int kprobe_generic_loader(char * kernel_func){
+int kprobe_generic_loader(const char *kernel_func){
   
     struct bpf_object *obj;
     struct bpf_program *prog;

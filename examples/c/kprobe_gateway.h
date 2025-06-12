@@ -1,4 +1,3 @@
-#include <unistd.h>
 
 #define BINARY_PATH_MAX_LEN 256
 #define FILE_PATH_MAX_LEN 256
@@ -12,9 +11,9 @@ enum{
 
 
 struct policy {
-    __u8 kind;
-    __u32 pid;
-    char binary[BINARY_PATH_MAX_LEN];
+    int kind;
+    int pid;
+    char comm[BINARY_PATH_MAX_LEN];
     char file_path[FILE_PATH_MAX_LEN];
 };
 

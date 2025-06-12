@@ -287,9 +287,10 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    err = kprobe_generic_loader("security_file_open");
+    const char *kernel_func = "__x64_sys_open";
+    err = kprobe_generic_loader(kernel_func);
     if(!err){
-        printf("kprobe attached to %s, press Ctrl+C to exit\n","security_file_open");
+        printf("kprobe attached to %s, press Ctrl+C to exit\n", kernel_func);
     }
 
 	while (!stop) {
